@@ -28,6 +28,61 @@ function selectAssigneeLordGaben() {
   cy.get('[data-testid="select-option:Lord Gaben"]').click();
 }
 
+function closedModalAndSuccessMessage() {
+  // Assert that modal window is closed and successful message is visible
+  cy.get('[data-testid="modal:issue-create"]').should('not.exist');
+  cy.contains('Issue has been successfully created.').should('be.visible');
+}
+
+function reloadPageAndNoSuccessMessage() {
+  // Reload the page to be able to see recently created issue
+  // Assert that successful message has dissappeared after the reload
+  cy.reload();
+  cy.contains('Issue has been successfully created.').should('not.exist');
+}
+
+function fillIssueDataAndAssert(description, title, issueType, priority) {
+  // Description
+  cy.get('.ql-editor').type(description).should('have.text', description);
+
+  // Title
+  cy.get('input[name="title"]').type(title).should('have.value', title);
+
+  // Issue Type
+  cy.get('[data-testid="select:type"]')
+    .click()
+    .then(() => {
+      cy.get('[data-testid="select:type"]').then(($element) => {
+        if ($element.text() == issueType) {
+          cy.get('label').contains('Issue Type').click();
+        } else {
+          cy.get(`[data-testid="select-option:${issueType}"]`).click();
+        }
+      });
+    });
+  cy.get('[data-testid="select:type"] div').should('contain', issueType);
+
+  // Reporter
+  selectReporterPickleRick();
+
+  // Assignee
+  selectAssigneeLordGaben();
+
+  // Priority
+  cy.get('[data-testid="select:priority"]')
+    .click()
+    .then(() => {
+      cy.get('[data-testid="select:priority"]').then(($element) => {
+        if ($element.text() == priority) {
+          cy.get('label').contains('Priority').click();
+        } else {
+          cy.get(`[data-testid="select-option:${priority}"]`).click();
+        }
+      });
+    });
+  cy.get('[data-testid="select:priority"] div').should('contain', priority);
+}
+
 // ------- Test cases ------ //
 
 describe('Issue create', () => {
@@ -45,14 +100,16 @@ describe('Issue create', () => {
     // System finds modal for creating issue and does next steps inside of it
     cy.get('[data-testid="modal:issue-create"]').within(() => {
       // Type value to description input field
-      cy.get('.ql-editor').type('TEST_DESCRIPTION');
-      cy.get('.ql-editor').should('have.text', 'TEST_DESCRIPTION');
+      cy.get('.ql-editor')
+        .type('TEST_DESCRIPTION')
+        .should('have.text', 'TEST_DESCRIPTION');
 
       // Type value to title input field
       // Order of filling in the fields is first description, then title on purpose
       // Otherwise filling title first sometimes doesn't work due to web page implementation
-      cy.get('input[name="title"]').type('TEST_TITLE');
-      cy.get('input[name="title"]').should('have.value', 'TEST_TITLE');
+      cy.get('input[name="title"]')
+        .type('TEST_TITLE')
+        .should('have.value', 'TEST_TITLE');
 
       // Open issue type dropdown and choose Story
       cy.get('[data-testid="select:type"]').click();
@@ -72,14 +129,8 @@ describe('Issue create', () => {
       cy.get('button[type="submit"]').click();
     });
 
-    // Assert that modal window is closed and successful message is visible
-    cy.get('[data-testid="modal:issue-create"]').should('not.exist');
-    cy.contains('Issue has been successfully created.').should('be.visible');
-
-    // Reload the page to be able to see recently created issue
-    // Assert that successful message has dissappeared after the reload
-    cy.reload();
-    cy.contains('Issue has been successfully created.').should('not.exist');
+    closedModalAndSuccessMessage();
+    reloadPageAndNoSuccessMessage();
 
     // Wait for Backlog list to be visible
     cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
@@ -141,11 +192,8 @@ describe('Issue create', () => {
       cy.get('button[type="submit"]').click();
     });
 
-    cy.get('[data-testid="modal:issue-create"]').should('not.exist');
-    cy.contains('Issue has been successfully created.').should('be.visible');
-
-    cy.reload();
-    cy.contains('Issue has been successfully created.').should('not.exist');
+    closedModalAndSuccessMessage();
+    reloadPageAndNoSuccessMessage();
 
     // Wait for Backlog list to be visible.
     cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
@@ -181,7 +229,7 @@ describe('Issue create', () => {
       });
   });
 
-  it.only('Should create a Task issue using random data and validate it successfully', () => {
+  it('Should create a Task issue using random data and validate it successfully', () => {
     cy.get('[data-testid="modal:issue-create"]').within(() => {
       cy.get('.ql-editor').type(randomWords);
       cy.get('.ql-editor').should('have.text', randomWords);
@@ -200,11 +248,8 @@ describe('Issue create', () => {
       cy.get('button[type="submit"]').click();
     });
 
-    cy.get('[data-testid="modal:issue-create"]').should('not.exist');
-    cy.contains('Issue has been successfully created.').should('be.visible');
-
-    cy.reload();
-    cy.contains('Issue has been successfully created.').should('not.exist');
+    closedModalAndSuccessMessage();
+    reloadPageAndNoSuccessMessage();
 
     // Wait for Backlog list to be visible
     cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
@@ -234,6 +279,51 @@ describe('Issue create', () => {
         // Assert that correct avatar and type icon are visible
         cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
         cy.get('[data-testid="icon:task"]').should('be.visible');
+      });
+  });
+
+  it('Should create a Bug issue using fillIssueDataAndAssert function and validate it successfully', () => {
+    const description = randomWords;
+    const title = randomWord;
+    const issueType = 'Bug';
+    const priority = 'Low';
+
+    cy.get('[data-testid="modal:issue-create"]').within(() => {
+      fillIssueDataAndAssert(description, title, issueType, priority);
+      cy.get('button[type="submit"]').click();
+    });
+
+    closedModalAndSuccessMessage();
+    reloadPageAndNoSuccessMessage();
+
+    // Wait for Backlog list to be visible
+    cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
+      .should('be.visible')
+      .and('have.length', 1);
+
+    cy.get('[data-testid="board-list:backlog"]')
+      .should('be.visible')
+      .and('have.length', 1)
+      .within(() => {
+        // Assert that this list contains 5 issues and first element with tag p has specified text
+        cy.get('[data-testid="list-issue"]')
+          .should('have.length', 5)
+          .first()
+          .find('p')
+          .contains(randomWord)
+          .siblings()
+          .within(() => {
+            cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
+            cy.get('[data-testid="icon:bug"]').should('be.visible');
+          });
+      });
+
+    cy.get('[data-testid="board-list:backlog"]')
+      .contains(randomWord)
+      .within(() => {
+        // Assert that correct avatar and type icon are visible
+        cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
+        cy.get('[data-testid="icon:bug"]').should('be.visible');
       });
   });
 
