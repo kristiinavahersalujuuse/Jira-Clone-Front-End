@@ -1,6 +1,7 @@
 // NB! Tests might have to be ran several times in order to be successful due to time out errors.
 // Or it is better to run tests one by one.
 
+import IssueModal from '../pages/IssueModal';
 import { faker } from '@faker-js/faker';
 
 // ------- Declaring functions and variables ------ //
@@ -339,5 +340,18 @@ describe('Issue create', () => {
         'This field is required'
       );
     });
+  });
+
+  it('Should not add issue to backlog when user cancels its creation', () => {
+    const title = 'Issue will be cancelled';
+    const description = randomWords;
+    const assigneeName = 'Lord Gaben';
+
+    // Using partially POM method
+    IssueModal.getIssueModal();
+    IssueModal.editDescription(description);
+    IssueModal.editTitle(title);
+    IssueModal.selectAssignee(assigneeName);
+    cy.get('button[type="button"]').last().click();
   });
 });
