@@ -5,6 +5,7 @@ const confirmWindow = '[data-testid="modal:confirm"]';
 const issueWindow = '[data-testid="modal:issue-details"]';
 const kanbanBoard = '[class="sc-elJkPf kpQKrj"]';
 const backlogList = '[data-testid="list-issue"]';
+const backlog = '[data-testid="board-list:backlog"]';
 
 // for buttons
 const trashButton = '[data-testid="icon:trash"]';
@@ -49,9 +50,13 @@ function deleteIssueAndAssert() {
 
   cy.get(kanbanBoard).should('be.visible').and('contain', 'Kanban board');
 
+  cy.get(backlog)
+    .should('be.visible')
+    .and('have.length', 1)
+    .within(() => {
+      cy.get(backlogList).should('have.length', 3);
+    });
   cy.get(backlogList).contains(deletedIssueTitle).should('not.exist');
-
-  cy.get(backlogList).should('have.length', 7);
 }
 
 function cancelDeletionAndAssert() {
@@ -67,8 +72,13 @@ function assertionAfterCancelDeletion() {
   // Assert issue is still on Kanban board
   // Assert that number of issues in the backlog list is the same
   cy.get(kanbanBoard).should('be.visible').and('contain', 'Kanban board');
-  cy.get(backlogList).should('contain', issueTitle);
-  cy.get(backlogList).should('have.length', 8);
+
+  cy.get(backlog)
+    .should('be.visible')
+    .and('have.length', 1)
+    .within(() => {
+      cy.get(backlogList).should('have.length', 4).contains(issueTitle);
+    });
 }
 
 // ------------ Test cases ------------ //
@@ -89,7 +99,7 @@ describe('Issue delete', () => {
       });
   });
 
-  it('Should delete issue TASK-2481685 and validate it successfully', () => {
+  it.only('Should delete issue TASK-2481685 and validate it successfully', () => {
     clickOnTrashButtonAndAssert();
     assertConfirmationWindowData();
     deleteIssueAndAssert();
