@@ -1,3 +1,78 @@
+// ------------ Variables ------------ //
+
+// for views
+const confirmWindow = '[data-testid="modal:confirm"]';
+const issueWindow = '[data-testid="modal:issue-details"]';
+const kanbanBoard = '[class="sc-elJkPf kpQKrj"]';
+const backlogList = '[data-testid="list-issue"]';
+
+// for buttons
+const trashButton = '[data-testid="icon:trash"]';
+const deleteIssueButton = 'button[class="sc-bwzfXH dIxFno sc-kGXeez bLOzZQ"]';
+const cancelButton = 'button[class="sc-bwzfXH ewzfNn sc-kGXeez bLOzZQ"]';
+const closeIssueModal = '[class="sc-bdVaJa fuyACr"]';
+
+// for text
+const issueTitle = 'This is an issue of type: Task.';
+const deletedIssueTitle = 'This is an issue of type: Task.';
+const deleteText = 'Are you sure you want to delete this issue?';
+const deleteMessage = "Once you delete, it's gone for good";
+
+// ------------ Functions ------------ //
+
+function clickOnTrashButtonAndAssert() {
+  // Click on trash button and assert that new confirmation window opens
+  cy.get(trashButton).should('be.visible').click();
+  cy.get(confirmWindow).should('be.visible');
+}
+
+function assertConfirmationWindowData() {
+  // Assert deletion text and button visibility on confirmation window
+  cy.get(confirmWindow)
+    .should('contain', deleteText)
+    .and('contain', deleteMessage)
+    .and('contain', 'Delete issue')
+    .and('contain', 'Cancel');
+}
+
+function deleteIssueAndAssert() {
+  // Click on Delete issue button on confirmation window
+  // Assert that confirmation window is closed
+  // Assert that issue window is closed
+  // Assert user is back on Kanban board and deleted issue is not visible
+  // Assert number of issues in the backlog list is decreased by one
+  cy.get(deleteIssueButton).should('be.visible').click();
+  cy.wait(6000);
+
+  cy.get(confirmWindow).should('not.exist');
+  cy.get(issueWindow).should('not.exist');
+
+  cy.get(kanbanBoard).should('be.visible').and('contain', 'Kanban board');
+
+  cy.get(backlogList).contains(deletedIssueTitle).should('not.exist');
+
+  cy.get(backlogList).should('have.length', 7);
+}
+
+function cancelDeletionAndAssert() {
+  // Click on Cancel button on confirmation window
+  // Assert user is back on current issue window
+  cy.get(cancelButton).should('be.visible').click();
+  cy.wait(6000);
+
+  cy.get(issueWindow).should('be.visible').and('contain', issueTitle);
+}
+
+function assertionAfterCancelDeletion() {
+  // Assert issue is still on Kanban board
+  // Assert that number of issues in the backlog list is the same
+  cy.get(kanbanBoard).should('be.visible').and('contain', 'Kanban board');
+  cy.get(backlogList).should('contain', issueTitle);
+  cy.get(backlogList).should('have.length', 8);
+}
+
+// ------------ Test cases ------------ //
+
 describe('Issue delete', () => {
   beforeEach(() => {
     cy.visit('/');
@@ -5,72 +80,26 @@ describe('Issue delete', () => {
       .should('eq', `${Cypress.env('baseUrl')}project`)
       .then((url) => {
         cy.visit(url + '/board');
-        cy.contains('This is an issue of type: Task.').click();
+        cy.contains(issueTitle).click();
+        cy.get(issueWindow).should('be.visible');
+        cy.get('textarea[placeholder="Short summary"]').should(
+          'have.text',
+          issueTitle
+        );
       });
   });
 
-  // test cases https://cerebrumhubstudents.atlassian.net/wiki/spaces/P5KBQ/pages/235340469/Delete+Issue+Test+Cases
-
-  // --- allolev issue detail oma ---//
-  it('Should update type, status, assignees, reporter, priority successfully', () => {
-    getIssueDetailsModal().within(() => {
-      cy.get('[data-testid="select:type"]').click('bottomRight');
-      cy.get('[data-testid="select-option:Story"]')
-        .trigger('mouseover')
-        .trigger('click');
-      cy.get('[data-testid="select:type"]').should('contain', 'Story');
-
-      cy.get('[data-testid="select:status"]').click('bottomRight');
-      cy.get('[data-testid="select-option:Done"]').click();
-      cy.get('[data-testid="select:status"]').should('have.text', 'Done');
-
-      cy.get('[data-testid="select:assignees"]').click('bottomRight');
-      cy.get('[data-testid="select-option:Lord Gaben"]').click();
-      cy.get('[data-testid="select:assignees"]').click('bottomRight');
-      cy.get('[data-testid="select-option:Baby Yoda"]').click();
-      cy.get('[data-testid="select:assignees"]').should('contain', 'Baby Yoda');
-      cy.get('[data-testid="select:assignees"]').should(
-        'contain',
-        'Lord Gaben'
-      );
-
-      cy.get('[data-testid="select:reporter"]').click('bottomRight');
-      cy.get('[data-testid="select-option:Pickle Rick"]').click();
-      cy.get('[data-testid="select:reporter"]').should(
-        'have.text',
-        'Pickle Rick'
-      );
-
-      cy.get('[data-testid="select:priority"]').click('bottomRight');
-      cy.get('[data-testid="select-option:Medium"]').click();
-      cy.get('[data-testid="select:priority"]').should('have.text', 'Medium');
-    });
+  it('Should delete issue TASK-2481685 and validate it successfully', () => {
+    clickOnTrashButtonAndAssert();
+    assertConfirmationWindowData();
+    deleteIssueAndAssert();
   });
 
-  it('Should update title, description successfully', () => {
-    const title = 'TEST_TITLE';
-    const description = 'TEST_DESCRIPTION';
-
-    getIssueDetailsModal().within(() => {
-      cy.get('textarea[placeholder="Short summary"]')
-        .clear()
-        .type(title)
-        .blur();
-
-      cy.get('.ql-snow').click().should('not.exist');
-
-      cy.get('.ql-editor').clear().type(description);
-
-      cy.contains('button', 'Save').click().should('not.exist');
-
-      cy.get('textarea[placeholder="Short summary"]').should(
-        'have.text',
-        title
-      );
-      cy.get('.ql-snow').should('have.text', description);
-    });
+  it('Should NOT delete issue if user cancels its deletion and validate it successfully', () => {
+    clickOnTrashButtonAndAssert();
+    assertConfirmationWindowData();
+    cancelDeletionAndAssert();
+    cy.get(closeIssueModal).should('be.visible').click();
+    assertionAfterCancelDeletion();
   });
-
-  const getIssueDetailsModal = () =>
-    cy.get('[data-testid="modal:issue-details"]');
 });
