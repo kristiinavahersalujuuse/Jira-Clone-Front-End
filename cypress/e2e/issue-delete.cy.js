@@ -38,12 +38,14 @@ function assertConfirmationWindowData() {
 
 function deleteIssueAndAssert() {
   // Click on Delete issue button on confirmation window
+  // Reload page
   // Assert that confirmation window is closed
   // Assert that issue window is closed
   // Assert user is back on Kanban board and deleted issue is not visible
   // Assert number of issues in the backlog list is decreased by one
   cy.get(deleteIssueButton).should('be.visible').click();
   cy.wait(6000);
+  cy.reload();
 
   cy.get(confirmWindow).should('not.exist');
   cy.get(issueWindow).should('not.exist');
