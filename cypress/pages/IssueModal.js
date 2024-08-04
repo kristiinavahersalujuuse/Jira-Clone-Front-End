@@ -74,6 +74,17 @@ class IssueModal {
       });
   }
 
+  // Following 'ensureNrOfIssuesAfterDel' is added by Kristiina
+  ensureNrOfIssuesAfterDel(expectedAmountIssues, issueTitle) {
+    cy.get(this.backlogList)
+      .should('be.visible')
+      .and('have.length', '1')
+      .within(() => {
+        cy.get(this.issuesList).should('have.length', expectedAmountIssues);
+      });
+    cy.get(this.backlogList).contains(issueTitle).should('not.exist');
+  }
+
   ensureIssueIsVisibleOnBoard(issueTitle) {
     cy.get(this.issueDetailModal).should('not.exist');
     cy.reload();

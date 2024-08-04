@@ -101,7 +101,7 @@ describe('Issue delete', () => {
       });
   });
 
-  it.only('Should delete issue TASK-2481685 and validate it successfully', () => {
+  it('Should delete issue TASK-2481685 and validate it successfully', () => {
     clickOnTrashButtonAndAssert();
     assertConfirmationWindowData();
     deleteIssueAndAssert();
