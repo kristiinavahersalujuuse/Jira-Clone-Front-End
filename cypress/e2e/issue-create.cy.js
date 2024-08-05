@@ -3,10 +3,27 @@
 import IssueModal from '../pages/IssueModal';
 import { faker } from '@faker-js/faker';
 
-// ------- Declaring functions and variables ------ //
+// ------------ Variables ------------ //
 
+// for text
 const randomWord = faker.word.noun();
 const randomWords = faker.word.words(5);
+const issueTitle = 'TEST_TITLE';
+const storyDescription = 'TEST_DESCRIPTION';
+const bugDescription = 'My bug description';
+
+// for dropdown menu
+const selectType = '[data-testid="select:type"]';
+const selectPriority = '[data-testid="select:priority"]';
+
+// for views
+const listBacklog = '[data-testid="board-list:backlog"]';
+const listIssue = '[data-testid="list-issue"]';
+
+// for buttons
+const buttonSubmit = 'button[type="submit"]';
+
+// ------------ Functions ------------ //
 
 function selectReporterBabyYoda() {
   cy.get('[data-testid="select:reporterId"]').click();
@@ -83,7 +100,7 @@ function fillIssueDataAndAssert(description, title, issueType, priority) {
   cy.get('[data-testid="select:priority"] div').should('contain', priority);
 }
 
-// ------- Test cases ------ //
+// ------------ Test cases ------------ //
 
 describe('Issue create', () => {
   beforeEach(() => {
@@ -98,45 +115,45 @@ describe('Issue create', () => {
   it('Should create a Story issue and validate it successfully', () => {
     cy.get('[data-testid="modal:issue-create"]').within(() => {
       cy.get('.ql-editor')
-        .type('TEST_DESCRIPTION')
-        .should('have.text', 'TEST_DESCRIPTION');
+        .type(storyDescription)
+        .should('have.text', storyDescription);
 
       // Order of filling in the fields is first description, then title on purpose
       // Otherwise filling title first sometimes doesn't work due to web page implementation
       cy.get('input[name="title"]')
-        .type('TEST_TITLE')
-        .should('have.value', 'TEST_TITLE');
+        .type(issueTitle)
+        .should('have.value', issueTitle);
 
-      cy.get('[data-testid="select:type"]').click();
+      cy.get(selectType).click();
       cy.get('[data-testid="select-option:Story"]')
         .wait(1000)
         .trigger('mouseover')
         .trigger('click');
-      // Here should be cy.get('[data-testid="con:story"]').should('be.visible'); But i gives time out
+      cy.get('[data-testid="icon:story"]').should('be.visible');
 
       selectReporterBabyYoda();
       selectAssigneePickleRick();
 
-      cy.get('button[type="submit"]').click();
+      cy.get(buttonSubmit).click();
     });
 
     closedModalAndSuccessMessage();
     reloadPageAndNoSuccessMessage();
 
     // Wait for Backlog list to be visible
-    cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
+    cy.get(listBacklog, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get('[data-testid="list-issue"]')
+        cy.get(listIssue)
           .should('have.length', 5)
           .first()
           .find('p')
-          .contains('TEST_TITLE')
+          .contains(issueTitle)
           .siblings()
           .within(() => {
             cy.get('[data-testid="avatar:Pickle Rick"]').should('be.visible');
@@ -144,8 +161,8 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get('[data-testid="board-list:backlog"]')
-      .contains('TEST_TITLE')
+    cy.get(listBacklog)
+      .contains(issueTitle)
       .within(() => {
         cy.get('[data-testid="avatar:Pickle Rick"]').should('be.visible');
         cy.get('[data-testid="icon:story"]').should('be.visible');
@@ -154,44 +171,44 @@ describe('Issue create', () => {
 
   it('Should create a Bug issue and validate it successfully', () => {
     cy.get('[data-testid="modal:issue-create"]').within(() => {
-      cy.get('.ql-editor').type('My bug description');
-      cy.get('.ql-editor').should('have.text', 'My bug description');
+      cy.get('.ql-editor').type(bugDescription);
+      cy.get('.ql-editor').should('have.text', bugDescription);
 
       cy.get('input[name="title"]').type('Bug');
       cy.get('input[name="title"]').should('have.value', 'Bug');
 
-      cy.get('[data-testid="select:type"]').click();
+      cy.get(selectType).click();
       cy.get('[data-testid="select-option:Bug"]')
         .wait(1000)
         .trigger('mouseover')
         .trigger('click');
-      // Here should be cy.get('[data-testid="con:bug"]').should('be.visible'); But i gives time out
+      cy.get('[data-testid="icon:bug"]').should('be.visible');
 
       selectReporterPickleRick();
       selectAssigneeLordGaben();
 
-      cy.get('[data-testid="select:priority"]').click();
+      cy.get(selectPriority).click();
       cy.get('[data-testid="select-option:Highest"]')
         .wait(1000)
         .trigger('mouseover')
         .trigger('click');
 
-      cy.get('button[type="submit"]').click();
+      cy.get(buttonSubmit).click();
     });
 
     closedModalAndSuccessMessage();
     reloadPageAndNoSuccessMessage();
 
     // Wait for Backlog list to be visible.
-    cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
+    cy.get(listBacklog, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get('[data-testid="list-issue"]')
+        cy.get(listIssue)
           .should('have.length', 5)
           .first()
           .find('p')
@@ -204,7 +221,7 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .contains('Bug')
       .within(() => {
         cy.get('[data-testid="avatar:Lord Gaben"]').should('be.visible');
@@ -223,27 +240,27 @@ describe('Issue create', () => {
 
       selectReporterBabyYoda();
 
-      cy.get('[data-testid="select:priority"]').click();
+      cy.get(selectPriority).click();
       cy.get('[data-testid="select-option:Low"]')
         .wait(1000)
         .trigger('mouseover')
         .trigger('click');
 
-      cy.get('button[type="submit"]').click();
+      cy.get(buttonSubmit).click();
     });
 
     closedModalAndSuccessMessage();
     reloadPageAndNoSuccessMessage();
 
-    cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
+    cy.get(listBacklog, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get('[data-testid="list-issue"]')
+        cy.get(listIssue)
           .should('have.length', 5)
           .first()
           .find('p')
@@ -255,7 +272,7 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .contains(randomWord)
       .within(() => {
         cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
@@ -271,22 +288,22 @@ describe('Issue create', () => {
 
     cy.get('[data-testid="modal:issue-create"]').within(() => {
       fillIssueDataAndAssert(description, title, issueType, priority);
-      cy.get('button[type="submit"]').click();
+      cy.get(buttonSubmit).click();
     });
 
     closedModalAndSuccessMessage();
     reloadPageAndNoSuccessMessage();
 
     // Wait for Backlog list to be visible
-    cy.get('[data-testid="board-list:backlog"]', { timeout: 60000 })
+    cy.get(listBacklog, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get('[data-testid="list-issue"]')
+        cy.get(listIssue)
           .should('have.length', 5)
           .first()
           .find('p')
@@ -298,7 +315,7 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get('[data-testid="board-list:backlog"]')
+    cy.get(listBacklog)
       .contains(randomWord)
       .within(() => {
         cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
@@ -308,7 +325,7 @@ describe('Issue create', () => {
 
   it('Should validate title is required field if missing', () => {
     cy.get('[data-testid="modal:issue-create"]').within(() => {
-      cy.get('button[type="submit"]').click();
+      cy.get(buttonSubmit).click();
 
       cy.get('[data-testid="form-field:title"]').should(
         'contain',
