@@ -15,6 +15,8 @@ const bugDescription = 'My bug description';
 // for dropdown menu
 const selectType = '[data-testid="select:type"]';
 const selectPriority = '[data-testid="select:priority"]';
+const selectReporter = '[data-testid="select:reporterId"]';
+const selectAssignee = '[data-testid="form-field:userIds"]';
 
 // for views
 const listBacklog = '[data-testid="board-list:backlog"]';
@@ -22,32 +24,33 @@ const listIssue = '[data-testid="list-issue"]';
 
 // for buttons
 const buttonSubmit = 'button[type="submit"]';
+const buttonCreateIssue = '[data-testid="modal:issue-create"]';
 
 // ------------ Functions ------------ //
 
 function selectReporterBabyYoda() {
-  cy.get('[data-testid="select:reporterId"]').click();
+  cy.get(selectReporter).click();
   cy.get('[data-testid="select-option:Baby Yoda"]').click();
 }
 
 function selectReporterPickleRick() {
-  cy.get('[data-testid="select:reporterId"]').click();
+  cy.get(selectReporter).click();
   cy.get('[data-testid="select-option:Pickle Rick"]').click();
 }
 
 function selectAssigneePickleRick() {
-  cy.get('[data-testid="form-field:userIds"]').click();
+  cy.get(selectAssignee).click();
   cy.get('[data-testid="select-option:Pickle Rick"]').click();
 }
 
 function selectAssigneeLordGaben() {
-  cy.get('[data-testid="form-field:userIds"]').click();
+  cy.get(selectAssignee).click();
   cy.get('[data-testid="select-option:Lord Gaben"]').click();
 }
 
 function closedModalAndSuccessMessage() {
   // Assert that modal window is closed and successful message is visible
-  cy.get('[data-testid="modal:issue-create"]').should('not.exist');
+  cy.get(buttonCreateIssue).should('not.exist');
   cy.contains('Issue has been successfully created.').should('be.visible');
 }
 
@@ -66,10 +69,10 @@ function fillIssueDataAndAssert(description, title, issueType, priority) {
   cy.get('input[name="title"]').type(title).should('have.value', title);
 
   // Issue Type
-  cy.get('[data-testid="select:type"]')
+  cy.get(selectType)
     .click()
     .then(() => {
-      cy.get('[data-testid="select:type"]').then(($element) => {
+      cy.get(selectType).then(($element) => {
         if ($element.text() == issueType) {
           cy.get('label').contains('Issue Type').click();
         } else {
@@ -113,7 +116,7 @@ describe('Issue create', () => {
   });
 
   it('Should create a Story issue and validate it successfully', () => {
-    cy.get('[data-testid="modal:issue-create"]').within(() => {
+    cy.get(buttonCreateIssue).within(() => {
       cy.get('.ql-editor')
         .type(storyDescription)
         .should('have.text', storyDescription);
@@ -170,7 +173,7 @@ describe('Issue create', () => {
   });
 
   it('Should create a Bug issue and validate it successfully', () => {
-    cy.get('[data-testid="modal:issue-create"]').within(() => {
+    cy.get(buttonCreateIssue).within(() => {
       cy.get('.ql-editor').type(bugDescription);
       cy.get('.ql-editor').should('have.text', bugDescription);
 
@@ -231,7 +234,7 @@ describe('Issue create', () => {
   });
 
   it('Should create a Task issue using random data and validate it successfully', () => {
-    cy.get('[data-testid="modal:issue-create"]').within(() => {
+    cy.get(buttonCreateIssue).within(() => {
       cy.get('.ql-editor').type(randomWords);
       cy.get('.ql-editor').should('have.text', randomWords);
 
@@ -286,7 +289,7 @@ describe('Issue create', () => {
     const issueType = 'Bug';
     const priority = 'Low';
 
-    cy.get('[data-testid="modal:issue-create"]').within(() => {
+    cy.get(buttonCreateIssue).within(() => {
       fillIssueDataAndAssert(description, title, issueType, priority);
       cy.get(buttonSubmit).click();
     });
@@ -324,7 +327,7 @@ describe('Issue create', () => {
   });
 
   it('Should validate title is required field if missing', () => {
-    cy.get('[data-testid="modal:issue-create"]').within(() => {
+    cy.get(buttonCreateIssue).within(() => {
       cy.get(buttonSubmit).click();
 
       cy.get('[data-testid="form-field:title"]').should(
