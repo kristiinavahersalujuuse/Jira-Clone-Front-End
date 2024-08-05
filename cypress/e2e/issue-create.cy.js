@@ -21,10 +21,10 @@ const selectAssignee = '[data-testid="form-field:userIds"]';
 // for views
 const listBacklog = '[data-testid="board-list:backlog"]';
 const listIssue = '[data-testid="list-issue"]';
+const issueCreate = '[data-testid="modal:issue-create"]';
 
 // for buttons
 const buttonSubmit = 'button[type="submit"]';
-const buttonCreateIssue = '[data-testid="modal:issue-create"]';
 
 // ------------ Functions ------------ //
 
@@ -50,7 +50,7 @@ function selectAssigneeLordGaben() {
 
 function closedModalAndSuccessMessage() {
   // Assert that modal window is closed and successful message is visible
-  cy.get(buttonCreateIssue).should('not.exist');
+  cy.get(issueCreate).should('not.exist');
   cy.contains('Issue has been successfully created.').should('be.visible');
 }
 
@@ -116,7 +116,7 @@ describe('Issue create', () => {
   });
 
   it('Should create a Story issue and validate it successfully', () => {
-    cy.get(buttonCreateIssue).within(() => {
+    cy.get(issueCreate).within(() => {
       cy.get('.ql-editor')
         .type(storyDescription)
         .should('have.text', storyDescription);
@@ -173,7 +173,7 @@ describe('Issue create', () => {
   });
 
   it('Should create a Bug issue and validate it successfully', () => {
-    cy.get(buttonCreateIssue).within(() => {
+    cy.get(issueCreate).within(() => {
       cy.get('.ql-editor').type(bugDescription);
       cy.get('.ql-editor').should('have.text', bugDescription);
 
@@ -234,7 +234,7 @@ describe('Issue create', () => {
   });
 
   it('Should create a Task issue using random data and validate it successfully', () => {
-    cy.get(buttonCreateIssue).within(() => {
+    cy.get(issueCreate).within(() => {
       cy.get('.ql-editor').type(randomWords);
       cy.get('.ql-editor').should('have.text', randomWords);
 
@@ -289,7 +289,7 @@ describe('Issue create', () => {
     const issueType = 'Bug';
     const priority = 'Low';
 
-    cy.get(buttonCreateIssue).within(() => {
+    cy.get(issueCreate).within(() => {
       fillIssueDataAndAssert(description, title, issueType, priority);
       cy.get(buttonSubmit).click();
     });
@@ -327,7 +327,7 @@ describe('Issue create', () => {
   });
 
   it('Should validate title is required field if missing', () => {
-    cy.get(buttonCreateIssue).within(() => {
+    cy.get(issueCreate).within(() => {
       cy.get(buttonSubmit).click();
 
       cy.get('[data-testid="form-field:title"]').should(

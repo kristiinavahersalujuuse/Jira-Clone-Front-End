@@ -3,15 +3,12 @@
 // for views
 const confirmWindow = '[data-testid="modal:confirm"]';
 const issueWindow = '[data-testid="modal:issue-details"]';
-const kanbanBoard = '[class="sc-elJkPf kpQKrj"]';
 const backlogList = '[data-testid="list-issue"]';
 const backlog = '[data-testid="board-list:backlog"]';
 
 // for buttons
 const trashButton = '[data-testid="icon:trash"]';
-const deleteIssueButton = 'button[class="sc-bwzfXH dIxFno sc-kGXeez bLOzZQ"]';
-const cancelButton = 'button[class="sc-bwzfXH ewzfNn sc-kGXeez bLOzZQ"]';
-const closeIssueModal = '[class="sc-bdVaJa fuyACr"]';
+const closeIssueModal = '[data-testid="icon:close"]';
 
 // for text
 const issueTitle = 'This is an issue of type: Task.';
@@ -27,11 +24,11 @@ function clickOnTrashButtonAndAssert() {
   cy.get(confirmWindow).should('be.visible');
 }
 
-function assertConfirmationWindowData() {
+function assertConfirmationWindowData(text, message) {
   // Assert deletion text and button visibility on confirmation window
   cy.get(confirmWindow)
-    .should('contain', deleteText)
-    .and('contain', deleteMessage)
+    .should('contain', text)
+    .and('contain', message)
     .and('contain', 'Delete issue')
     .and('contain', 'Cancel');
 }
@@ -43,14 +40,15 @@ function deleteIssueAndAssert() {
   // Assert that issue window is closed
   // Assert user is back on Kanban board and deleted issue is not visible
   // Assert number of issues in the backlog list is decreased by one
-  cy.get(deleteIssueButton).should('be.visible').click();
+  cy.get('button').contains('Delete issue').should('be.visible').click();
   cy.wait(6000);
   cy.reload();
 
   cy.get(confirmWindow).should('not.exist');
   cy.get(issueWindow).should('not.exist');
 
-  cy.get(kanbanBoard).should('be.visible').and('contain', 'Kanban board');
+  cy.get('div').should('contain', 'Kanban board');
+  // cy.get('button').contains('Cancel').should('be.visible').click()
 
   cy.get(backlog)
     .should('be.visible')
@@ -64,7 +62,12 @@ function deleteIssueAndAssert() {
 function cancelDeletionAndAssert() {
   // Click on Cancel button on confirmation window
   // Assert user is back on current issue window
-  cy.get(cancelButton).should('be.visible').click();
+  cy.get(confirmWindow)
+    .should('be.visible')
+    .within(() => {
+      cy.get('button').contains('Cancel').should('be.visible').click();
+    });
+
   cy.wait(6000);
 
   cy.get(issueWindow).should('be.visible').and('contain', issueTitle);
@@ -73,7 +76,7 @@ function cancelDeletionAndAssert() {
 function assertionAfterCancelDeletion() {
   // Assert issue is still on Kanban board
   // Assert that number of issues in the backlog list is the same
-  cy.get(kanbanBoard).should('be.visible').and('contain', 'Kanban board');
+  cy.get('div').should('contain', 'Kanban board');
 
   cy.get(backlog)
     .should('be.visible')
@@ -103,15 +106,15 @@ describe('Issue delete', () => {
 
   it('Should delete issue TASK-2481685 and validate it successfully', () => {
     clickOnTrashButtonAndAssert();
-    assertConfirmationWindowData();
+    assertConfirmationWindowData(deleteText, deleteMessage);
     deleteIssueAndAssert();
   });
 
   it('Should NOT delete issue if user cancels its deletion and validate it successfully', () => {
     clickOnTrashButtonAndAssert();
-    assertConfirmationWindowData();
+    assertConfirmationWindowData(deleteText, deleteMessage);
     cancelDeletionAndAssert();
-    cy.get(closeIssueModal).should('be.visible').click();
+    cy.get(closeIssueModal).first().should('be.visible').click();
     assertionAfterCancelDeletion();
   });
 });
