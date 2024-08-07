@@ -1,4 +1,6 @@
-// NB! Tests might have to be ran several times in order to be successful due to time out errors.
+/* NB! Tests might have to be ran several times in order to be successful due to time out errors.
+Sometimes it's even better to run them one by one to avoid time out errors.
+*/
 
 import IssueModal from '../pages/IssueModal';
 import { faker } from '@faker-js/faker';
@@ -8,19 +10,18 @@ import { faker } from '@faker-js/faker';
 // for text
 const randomWord = faker.word.noun();
 const randomWords = faker.word.words(5);
-const issueTitle = 'TEST_TITLE';
-const storyDescription = 'TEST_DESCRIPTION';
-const bugDescription = 'My bug description';
+let issueTitle = 'TEST_TITLE';
+let issueDescription = 'TEST_DESCRIPTION';
 
 // for dropdown menu
-const selectType = '[data-testid="select:type"]';
+const selectIssueType = '[data-testid="select:type"]';
 const selectPriority = '[data-testid="select:priority"]';
 const selectReporter = '[data-testid="select:reporterId"]';
 const selectAssignee = '[data-testid="form-field:userIds"]';
 
 // for views
-const listBacklog = '[data-testid="board-list:backlog"]';
-const listIssue = '[data-testid="list-issue"]';
+const backlogList = '[data-testid="board-list:backlog"]';
+const issueList = '[data-testid="list-issue"]';
 const issueCreate = '[data-testid="modal:issue-create"]';
 
 // for buttons
@@ -28,79 +29,57 @@ const buttonSubmit = 'button[type="submit"]';
 
 // ------------ Functions ------------ //
 
-function selectReporterBabyYoda() {
+function fillIssueTitleAndDescription(issueTitle, issueDescription) {
+  // Description
+  cy.get('.ql-editor')
+    .type(issueDescription)
+    .should('have.text', issueDescription);
+  // Title
+  cy.get('input[name="title"]')
+    .type(issueTitle)
+    .should('have.value', issueTitle);
+}
+
+function chooseIssueType(issueType, type) {
+  // issueType must have capital, e.g Bug
+  cy.get(selectIssueType).click();
+  cy.get(`[data-testid="select-option:${issueType}"]`)
+    .wait(1000)
+    .trigger('mouseover')
+    .trigger('click');
+  // type must be all small captions, e.g bug
+  cy.get(`[data-testid="icon:${type}"]`).should('be.visible');
+}
+
+function choosePriority(priority) {
+  cy.get(selectPriority).click();
+  cy.get(`[data-testid="select-option:${priority}"]`)
+    .wait(1000)
+    .trigger('mouseover')
+    .trigger('click');
+}
+
+function chooseReporter(reporter) {
   cy.get(selectReporter).click();
-  cy.get('[data-testid="select-option:Baby Yoda"]').click();
+  cy.get(`[data-testid="select-option:${reporter}"]`).click();
 }
 
-function selectReporterPickleRick() {
-  cy.get(selectReporter).click();
-  cy.get('[data-testid="select-option:Pickle Rick"]').click();
-}
-
-function selectAssigneePickleRick() {
+function chooseAssignee(assignee) {
   cy.get(selectAssignee).click();
-  cy.get('[data-testid="select-option:Pickle Rick"]').click();
+  cy.get(`[data-testid="select-option:${assignee}"]`).click();
 }
 
-function selectAssigneeLordGaben() {
-  cy.get(selectAssignee).click();
-  cy.get('[data-testid="select-option:Lord Gaben"]').click();
-}
-
-function closedModalAndSuccessMessage() {
+function checkForSuccessMessage() {
   // Assert that modal window is closed and successful message is visible
   cy.get(issueCreate).should('not.exist');
   cy.contains('Issue has been successfully created.').should('be.visible');
 }
 
-function reloadPageAndNoSuccessMessage() {
+function reloadBacklogAndAssert() {
   // Reload the page to be able to see recently created issue
   // Assert that successful message has dissappeared after the reload
   cy.reload();
   cy.contains('Issue has been successfully created.').should('not.exist');
-}
-
-function fillIssueDataAndAssert(description, title, issueType, priority) {
-  // Description
-  cy.get('.ql-editor').type(description).should('have.text', description);
-
-  // Title
-  cy.get('input[name="title"]').type(title).should('have.value', title);
-
-  // Issue Type
-  cy.get(selectType)
-    .click()
-    .then(() => {
-      cy.get(selectType).then(($element) => {
-        if ($element.text() == issueType) {
-          cy.get('label').contains('Issue Type').click();
-        } else {
-          cy.get(`[data-testid="select-option:${issueType}"]`).click();
-        }
-      });
-    });
-  cy.get('[data-testid="select:type"] div').should('contain', issueType);
-
-  // Reporter
-  selectReporterPickleRick();
-
-  // Assignee
-  selectAssigneeLordGaben();
-
-  // Priority
-  cy.get('[data-testid="select:priority"]')
-    .click()
-    .then(() => {
-      cy.get('[data-testid="select:priority"]').then(($element) => {
-        if ($element.text() == priority) {
-          cy.get('label').contains('Priority').click();
-        } else {
-          cy.get(`[data-testid="select-option:${priority}"]`).click();
-        }
-      });
-    });
-  cy.get('[data-testid="select:priority"] div').should('contain', priority);
 }
 
 // ------------ Test cases ------------ //
@@ -117,42 +96,27 @@ describe('Issue create', () => {
 
   it('Should create a Story issue and validate it successfully', () => {
     cy.get(issueCreate).within(() => {
-      cy.get('.ql-editor')
-        .type(storyDescription)
-        .should('have.text', storyDescription);
-
-      // Order of filling in the fields is first description, then title on purpose
-      // Otherwise filling title first sometimes doesn't work due to web page implementation
-      cy.get('input[name="title"]')
-        .type(issueTitle)
-        .should('have.value', issueTitle);
-
-      cy.get(selectType).click();
-      cy.get('[data-testid="select-option:Story"]')
-        .wait(1000)
-        .trigger('mouseover')
-        .trigger('click');
-      cy.get('[data-testid="icon:story"]').should('be.visible');
-
-      selectReporterBabyYoda();
-      selectAssigneePickleRick();
+      fillIssueTitleAndDescription(issueTitle, issueDescription);
+      chooseIssueType('Story', 'story');
+      chooseReporter('Baby Yoda');
+      chooseAssignee('Pickle Rick');
 
       cy.get(buttonSubmit).click();
     });
 
-    closedModalAndSuccessMessage();
-    reloadPageAndNoSuccessMessage();
+    checkForSuccessMessage();
+    reloadBacklogAndAssert();
 
     // Wait for Backlog list to be visible
-    cy.get(listBacklog, { timeout: 60000 })
+    cy.get(backlogList, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get(listBacklog)
+    cy.get(backlogList)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get(listIssue)
+        cy.get(issueList)
           .should('have.length', 5)
           .first()
           .find('p')
@@ -164,7 +128,7 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get(listBacklog)
+    cy.get(backlogList)
       .contains(issueTitle)
       .within(() => {
         cy.get('[data-testid="avatar:Pickle Rick"]').should('be.visible');
@@ -173,49 +137,36 @@ describe('Issue create', () => {
   });
 
   it('Should create a Bug issue and validate it successfully', () => {
+    issueTitle = 'Bug';
+    issueDescription = 'My bug description';
+
     cy.get(issueCreate).within(() => {
-      cy.get('.ql-editor').type(bugDescription);
-      cy.get('.ql-editor').should('have.text', bugDescription);
-
-      cy.get('input[name="title"]').type('Bug');
-      cy.get('input[name="title"]').should('have.value', 'Bug');
-
-      cy.get(selectType).click();
-      cy.get('[data-testid="select-option:Bug"]')
-        .wait(1000)
-        .trigger('mouseover')
-        .trigger('click');
-      cy.get('[data-testid="icon:bug"]').should('be.visible');
-
-      selectReporterPickleRick();
-      selectAssigneeLordGaben();
-
-      cy.get(selectPriority).click();
-      cy.get('[data-testid="select-option:Highest"]')
-        .wait(1000)
-        .trigger('mouseover')
-        .trigger('click');
+      fillIssueTitleAndDescription(issueTitle, issueDescription);
+      chooseIssueType('Bug', 'bug');
+      chooseReporter('Pickle Rick');
+      chooseAssignee('Lord Gaben');
+      choosePriority('Highest');
 
       cy.get(buttonSubmit).click();
     });
 
-    closedModalAndSuccessMessage();
-    reloadPageAndNoSuccessMessage();
+    checkForSuccessMessage();
+    reloadBacklogAndAssert();
 
     // Wait for Backlog list to be visible.
-    cy.get(listBacklog, { timeout: 60000 })
+    cy.get(backlogList, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get(listBacklog)
+    cy.get(backlogList)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get(listIssue)
+        cy.get(issueList)
           .should('have.length', 5)
           .first()
           .find('p')
-          .contains('Bug')
+          .contains(issueTitle)
           .siblings()
           .within(() => {
             cy.get('[data-testid="avatar:Lord Gaben"]').should('be.visible');
@@ -224,7 +175,7 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get(listBacklog)
+    cy.get(backlogList)
       .contains('Bug')
       .within(() => {
         cy.get('[data-testid="avatar:Lord Gaben"]').should('be.visible');
@@ -234,40 +185,34 @@ describe('Issue create', () => {
   });
 
   it('Should create a Task issue using random data and validate it successfully', () => {
+    issueTitle = randomWord;
+    issueDescription = randomWords;
+
     cy.get(issueCreate).within(() => {
-      cy.get('.ql-editor').type(randomWords);
-      cy.get('.ql-editor').should('have.text', randomWords);
-
-      cy.get('input[name="title"]').type(randomWord);
-      cy.get('input[name="title"]').should('have.value', randomWord);
-
-      selectReporterBabyYoda();
-
-      cy.get(selectPriority).click();
-      cy.get('[data-testid="select-option:Low"]')
-        .wait(1000)
-        .trigger('mouseover')
-        .trigger('click');
+      fillIssueTitleAndDescription(issueTitle, issueDescription);
+      chooseReporter('Baby Yoda');
+      choosePriority('Low');
 
       cy.get(buttonSubmit).click();
     });
 
-    closedModalAndSuccessMessage();
-    reloadPageAndNoSuccessMessage();
+    checkForSuccessMessage();
+    reloadBacklogAndAssert();
 
-    cy.get(listBacklog, { timeout: 60000 })
+    // Wait for Backlog list to be visible.
+    cy.get(backlogList, { timeout: 60000 })
       .should('be.visible')
       .and('have.length', 1);
 
-    cy.get(listBacklog)
+    cy.get(backlogList)
       .should('be.visible')
       .and('have.length', 1)
       .within(() => {
-        cy.get(listIssue)
+        cy.get(issueList)
           .should('have.length', 5)
           .first()
           .find('p')
-          .contains(randomWord)
+          .contains(issueTitle)
           .siblings()
           .within(() => {
             cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
@@ -275,54 +220,11 @@ describe('Issue create', () => {
           });
       });
 
-    cy.get(listBacklog)
-      .contains(randomWord)
+    cy.get(backlogList)
+      .contains(issueTitle)
       .within(() => {
         cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
         cy.get('[data-testid="icon:task"]').should('be.visible');
-      });
-  });
-
-  it('Should create a Bug issue using fillIssueDataAndAssert function and validate it successfully', () => {
-    const description = randomWords;
-    const title = randomWord;
-    const issueType = 'Bug';
-    const priority = 'Low';
-
-    cy.get(issueCreate).within(() => {
-      fillIssueDataAndAssert(description, title, issueType, priority);
-      cy.get(buttonSubmit).click();
-    });
-
-    closedModalAndSuccessMessage();
-    reloadPageAndNoSuccessMessage();
-
-    // Wait for Backlog list to be visible
-    cy.get(listBacklog, { timeout: 60000 })
-      .should('be.visible')
-      .and('have.length', 1);
-
-    cy.get(listBacklog)
-      .should('be.visible')
-      .and('have.length', 1)
-      .within(() => {
-        cy.get(listIssue)
-          .should('have.length', 5)
-          .first()
-          .find('p')
-          .contains(randomWord)
-          .siblings()
-          .within(() => {
-            cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
-            cy.get('[data-testid="icon:bug"]').should('be.visible');
-          });
-      });
-
-    cy.get(listBacklog)
-      .contains(randomWord)
-      .within(() => {
-        cy.get('[data-testid="icon:arrow-down"]').should('be.visible');
-        cy.get('[data-testid="icon:bug"]').should('be.visible');
       });
   });
 
@@ -338,11 +240,11 @@ describe('Issue create', () => {
   });
 
   it('Should not add issue to backlog when user cancels its creation', () => {
+    // Using POM method
     const title = 'Issue will be cancelled';
     const description = randomWords;
     const assigneeName = 'Lord Gaben';
 
-    // Using partially POM method
     IssueModal.getIssueModal();
     IssueModal.editDescription(description);
     IssueModal.editTitle(title);
