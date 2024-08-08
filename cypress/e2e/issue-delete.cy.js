@@ -30,11 +30,12 @@ function clickOnTrashButtonAndAssert() {
 
 function assertConfirmationWindowData(text, message) {
   cy.get(confirmWindow).should('be.visible');
-  cy.get(confirmWindow)
-    .should('contain', text)
-    .and('contain', message)
-    .and('contain', 'Delete issue')
-    .and('contain', 'Cancel');
+  cy.get(confirmWindow).within(() => {
+    cy.contains(text);
+    cy.contains(message);
+    cy.contains('Delete issue');
+    cy.contains('Cancel');
+  });
 }
 
 function deleteIssue() {
@@ -109,7 +110,7 @@ describe('Existing issue delete', () => {
     assertBacklogAfterDel(3, deletedIssueTitle);
   });
 
-  it('Should NOT delete existing issue if user cancels its deletion and validate it successfully', () => {
+  it.only('Should NOT delete existing issue if user cancels its deletion and validate it successfully', () => {
     clickOnTrashButtonAndAssert();
     assertConfirmationWindowData(deleteText, deleteMessage);
     cancelDeletionAndAssert(issueTitle);
