@@ -39,7 +39,6 @@ describe('Existing issue delete', () => {
     cy.url()
       .should('eq', `${Cypress.env('baseUrl')}project/board`)
       .then((url) => {
-        //open issue detail modal with title from line 16
         cy.contains(issueTitle).click();
       });
   });
