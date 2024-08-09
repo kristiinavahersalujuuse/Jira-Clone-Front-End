@@ -4,15 +4,15 @@ import { faker } from '@faker-js/faker';
 // ------------ Variables ------------ //
 
 // for views
-const confirmWindow = '[data-testid="modal:confirm"]';
-const createIssueModal = '[data-testid="modal:issue-details"]';
-const backlogList = '[data-testid="list-issue"]';
-const backlog = '[data-testid="board-list:backlog"]';
+const confirmWindow = () => cy.get('[data-testid="modal:confirm"]');
+const createIssueModal = () => cy.get('[data-testid="modal:issue-details"]');
+const backlogList = () => cy.get('[data-testid="list-issue"]');
+const backlog = () => cy.get('[data-testid="board-list:backlog"]');
 
 // for buttons
-const trashButton = '[data-testid="icon:trash"]';
-const closeIssueButton = '[data-testid="icon:close"]';
-const createIssueButton = '[data-testid="icon:plus"]';
+const trashButton = () => cy.get('[data-testid="icon:trash"]');
+const closeIssueButton = () => cy.get('[data-testid="icon:close"]');
+const createIssueButton = () => cy.get('[data-testid="icon:plus"]');
 
 // for text
 const randomWord = faker.word.noun();
@@ -25,12 +25,12 @@ const deleteMessage = "Once you delete, it's gone for good";
 // ------------ Functions ------------ //
 
 function clickOnTrashButtonAndAssert() {
-  cy.get(trashButton).should('be.visible').click();
+  trashButton().should('be.visible').click();
 }
 
 function assertConfirmationWindowData(text, message) {
-  cy.get(confirmWindow).should('be.visible');
-  cy.get(confirmWindow).within(() => {
+  confirmWindow().should('be.visible');
+  confirmWindow().within(() => {
     cy.contains(text);
     cy.contains(message);
     cy.contains('Delete issue');
@@ -46,22 +46,22 @@ function assertBacklogAfterDel(expectedAmountIssues, title) {
   cy.wait(6000);
   cy.reload();
 
-  cy.get(confirmWindow).should('not.exist');
-  cy.get(createIssueModal).should('not.exist');
+  confirmWindow().should('not.exist');
+  createIssueModal().should('not.exist');
 
   cy.get('div').should('contain', 'Kanban board');
 
-  cy.get(backlog)
+  backlog()
     .should('be.visible')
     .and('have.length', 1)
     .within(() => {
-      cy.get(backlogList).should('have.length', expectedAmountIssues);
+      backlogList().should('have.length', expectedAmountIssues);
     });
-  cy.get(backlogList).contains(title).should('not.exist');
+  backlogList().contains(title).should('not.exist');
 }
 
 function cancelDeletionAndAssert(title) {
-  cy.get(confirmWindow)
+  confirmWindow()
     .should('be.visible')
     .within(() => {
       cy.get('button').contains('Cancel').should('be.visible').click();
@@ -69,19 +69,17 @@ function cancelDeletionAndAssert(title) {
 
   cy.wait(6000);
 
-  cy.get(createIssueModal).should('be.visible').and('contain', title);
+  createIssueModal().should('be.visible').and('contain', title);
 }
 
 function assertBacklogAfterCancelDeletion(expectedAmountIssues, title) {
   cy.get('div').should('contain', 'Kanban board');
 
-  cy.get(backlog)
+  backlog()
     .should('be.visible')
     .and('have.length', 1)
     .within(() => {
-      cy.get(backlogList)
-        .should('have.length', expectedAmountIssues)
-        .contains(title);
+      backlogList().should('have.length', expectedAmountIssues).contains(title);
     });
 }
 
@@ -95,7 +93,7 @@ describe('Existing issue delete', () => {
       .then((url) => {
         cy.visit(url + '/board');
         cy.contains(issueTitle).click();
-        cy.get(createIssueModal).should('be.visible');
+        createIssueModal().should('be.visible');
         cy.get('textarea[placeholder="Short summary"]').should(
           'have.text',
           issueTitle
@@ -110,11 +108,11 @@ describe('Existing issue delete', () => {
     assertBacklogAfterDel(3, deletedIssueTitle);
   });
 
-  it.only('Should NOT delete existing issue if user cancels its deletion and validate it successfully', () => {
+  it('Should NOT delete existing issue if user cancels its deletion and validate it successfully', () => {
     clickOnTrashButtonAndAssert();
     assertConfirmationWindowData(deleteText, deleteMessage);
     cancelDeletionAndAssert(issueTitle);
-    cy.get(closeIssueButton).first().should('be.visible').click();
+    closeIssueButton().first().should('be.visible').click();
     assertBacklogAfterCancelDeletion(4, issueTitle);
   });
 });
@@ -126,7 +124,7 @@ describe('Newly created issue delete', () => {
       .should('eq', `${Cypress.env('baseUrl')}project`)
       .then((url) => {
         cy.visit(url + '/board');
-        cy.get(createIssueButton).click();
+        createIssueButton().click();
       });
   });
 
@@ -143,8 +141,8 @@ describe('Newly created issue delete', () => {
     IssueModal.createIssue(issueDetails);
     IssueModal.ensureIssueIsCreated(expectedAmountIssues, issueDetails);
 
-    cy.get(backlog).within(() => {
-      cy.get(backlogList).first().find('p').contains(randomWord).click();
+    backlog().within(() => {
+      backlogList().first().find('p').contains(randomWord).click();
     });
 
     clickOnTrashButtonAndAssert();
@@ -164,14 +162,14 @@ describe('Newly created issue delete', () => {
     IssueModal.createIssue(issueDetails);
     IssueModal.ensureIssueIsCreated(expectedAmountIssues, issueDetails);
 
-    cy.get(backlog).within(() => {
-      cy.get(backlogList).first().find('p').contains(randomWord).click();
+    backlog().within(() => {
+      backlogList().first().find('p').contains(randomWord).click();
     });
 
     clickOnTrashButtonAndAssert();
     assertConfirmationWindowData(deleteText, deleteMessage);
     cancelDeletionAndAssert(randomWord);
-    cy.get(closeIssueButton).first().should('be.visible').click();
+    closeIssueButton().first().should('be.visible').click();
     assertBacklogAfterCancelDeletion(5, randomWord);
   });
 });
