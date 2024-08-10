@@ -36,8 +36,9 @@ const getCloseIssueButton = () => cy.get(closeIssueButton);
 const getCreateIssueButton = () => cy.get(createIssueButton);
 
 // actions with assertions
-const clickOnTrashButtonAndAssert = () =>
+const clickOnTrashButtonAndAssert = () => {
   getTrashButton().should('be.visible').click();
+};
 
 const assertConfirmationWindowData = (text, message) => {
   return getConfirmWindow()
