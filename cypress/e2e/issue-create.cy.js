@@ -18,6 +18,7 @@ const selectIssueType = '[data-testid="select:type"]';
 const selectPriority = '[data-testid="select:priority"]';
 const selectReporter = '[data-testid="select:reporterId"]';
 const selectAssignee = '[data-testid="form-field:userIds"]';
+const issueDetailsModal = '[data-testid="modal:issue-details"]';
 
 // for views
 const backlogList = '[data-testid="board-list:backlog"]';
@@ -250,5 +251,40 @@ describe('Issue create', () => {
     IssueModal.editTitle(title);
     IssueModal.selectAssignee(assigneeName);
     cy.get('button[type="button"]').last().click();
+  });
+
+  it.only('Should verify that the application is removing unnecessary spaces from the issue title on baclog board', () => {
+    const issueTitle = `      ${faker.word.noun()}   `;
+    const trimmmedIssueTitle = issueTitle.trim();
+
+    cy.get(issueCreate).within(() => {
+      fillIssueTitleAndDescription(issueTitle, issueDescription);
+      cy.get(buttonSubmit).click();
+    });
+
+    cy.get(backlogList, { timeout: 60000 })
+      .should('be.visible')
+      .and('have.length', 1);
+
+    // Check that the title is trimmed in backlog
+    cy.get(backlogList).within(() => {
+      cy.get(issueList)
+        .first()
+        .find('p')
+        .contains(trimmmedIssueTitle)
+        .then(() => {
+          expect(issueTitle.trim()).to.equal(trimmmedIssueTitle);
+        })
+
+        // check that the title is trimmed in IssueModal
+        .click();
+    });
+
+    cy.get(issueDetailsModal).within(() => {
+      cy.get('textarea[placeholder="Short summary"]').should(
+        'have.value',
+        issueTitle
+      );
+    });
   });
 });
