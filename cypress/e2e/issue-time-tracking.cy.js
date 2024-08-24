@@ -49,6 +49,9 @@ const closeIssueButton = '[data-testid="icon:close"]';
 const noTimeLoggedText = 'No time logged';
 const estRandomTime = faker.number.int({ min: 1, max: 10 });
 const newRandomTime = faker.number.int({ min: 11, max: 20 });
+const hEstimatedText = 'h estimated';
+const hLoggedText = 'h logged';
+const hRemainingText = 'h remaining';
 
 // fields
 const stopWatchIcon = '[data-testid="icon:stopwatch"]';
@@ -174,12 +177,18 @@ const verifyEstimatedTimeField = (hours) => {
 };
 
 const verifyEstimatedTime = (hours) => {
-  getStopWatchIcon().next().children().should('contain', `${hours}h estimated`);
+  getStopWatchIcon()
+    .next()
+    .children()
+    .should('contain', `${hours}${hEstimatedText}`);
 };
 
 const verifyLoggedTime = (hours) => {
   getStopWatchIcon().next().children().should('not.contain', noTimeLoggedText);
-  getStopWatchIcon().next().children().should('contain', `${hours}h logged`);
+  getStopWatchIcon()
+    .next()
+    .children()
+    .should('contain', `${hours}${hLoggedText}`);
 };
 
 const changeEstimatedTime = (hours) => {
@@ -219,7 +228,7 @@ const fillTimeTrackingFieldsAndVerify = (spentTime, remainingTime) => {
       getStopWatchIcon()
         .next()
         .children()
-        .should('contain', `${spentTime}h logged`);
+        .should('contain', `${spentTime}${hLoggedText}`);
     });
 
   getRemainingTimeField()
@@ -231,7 +240,7 @@ const fillTimeTrackingFieldsAndVerify = (spentTime, remainingTime) => {
       getStopWatchIcon()
         .next()
         .children()
-        .should('contain', `${remainingTime}h remaining`);
+        .should('contain', `${remainingTime}${hRemainingText}`);
     });
 };
 
@@ -252,7 +261,7 @@ const removeTimeTrackingFieldsAndVerify = (hours) => {
       getStopWatchIcon()
         .next()
         .children()
-        .should('contain', `${hours}h estimated`);
+        .should('contain', `${hours}${hEstimatedText}`);
     });
 };
 
@@ -264,7 +273,7 @@ const addSpentAndRemainingTime = (hours, spentTime, remainingTime) => {
         .next()
         .children()
         .should('contain', noTimeLoggedText)
-        .and('contain', `${hours}h estimated`);
+        .and('contain', `${hours}${hEstimatedText}`);
 
       fillTimeTrackingFieldsAndVerify(spentTime, remainingTime);
     });
