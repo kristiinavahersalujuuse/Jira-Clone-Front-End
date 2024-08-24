@@ -77,6 +77,7 @@ describe('Time estimation functionality', () => {
 });
 
 // ---------> Test cases for time logging <--------- //
+
 describe('Time logging functionality', () => {
   beforeEach(() => {
     cy.visit('/');
